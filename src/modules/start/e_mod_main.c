@@ -198,11 +198,11 @@ _button_cb_mouse_down(void *data, Evas *e __UNUSED__, Evas_Object *obj __UNUSED_
    if (ev->button == 1)
      {
         Evas_Coord x, y, w, h;
-        int cx, cy;
+        int cx, cy, ch = 0, cw = 0;
 
         evas_object_geometry_get(inst->o_button, &x, &y, &w, &h); 
         e_gadcon_canvas_zone_geometry_get(inst->gcc->gadcon,
-                                          &cx, &cy, NULL, NULL);
+                                          &cx, &cy, &cw, &ch);
         x += cx;
         y += cy;
         if (!inst->main_menu)
@@ -260,6 +260,32 @@ _button_cb_mouse_down(void *data, Evas *e __UNUSED__, Evas_Object *obj __UNUSED_
                }
 
              e_gadcon_locked_set(inst->gcc->gadcon, 1);
+             
+             int zone_x = inst->gcc->gadcon->zone->x;
+             int zone_y = inst->gcc->gadcon->zone->y;
+             int zone_w = inst->gcc->gadcon->zone->w;
+
+             if (dir == E_MENU_POP_DIRECTION_LEFT)
+               {
+                 if (ev->output.y < h + 10) y = cy;    //zone snap
+                 x = zone_x + zone_w - cw - 3;         //shelf snap
+               }
+             if (dir == E_MENU_POP_DIRECTION_RIGHT)
+               {
+                 if (ev->output.y < h + 10) y = cy;
+                 x = zone_x + cw - w + 3;
+               }
+             if (dir == E_MENU_POP_DIRECTION_UP)
+               {
+                 if (x < cx + w) x = cx;
+                 if (y > ch) y = cy - 3;
+               }
+             if (dir == E_MENU_POP_DIRECTION_DOWN)
+               {
+                 if (x < cx + w) x = cx;
+                 y = zone_y + ch - h + 3;
+               }
+
              e_menu_activate_mouse(inst->main_menu,
                                    e_util_zone_current_get(e_manager_current_get()),
                                    x, y, w, h, dir, ev->timestamp);
